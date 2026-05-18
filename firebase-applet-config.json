@@ -1,0 +1,10 @@
+{
+  "projectId": "mohtades-shop",
+  "appId": "",
+  "apiKey": "",
+  "authDomain": "mohtades-shop.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "mohtades-shop.firebasestorage.app",
+  "messagingSenderId": "",
+  "measurementId": ""
+}

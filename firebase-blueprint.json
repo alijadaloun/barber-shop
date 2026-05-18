@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "admin": {
+      "title": "Admin",
+      "description": "Administrative users for the barber shop dashboard.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "passwordHash": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "passwordHash", "createdAt"]
+    },
+    "barber": {
+      "title": "Barber",
+      "description": "A barber working at Mohtade's Shop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "bio": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "bio", "imageUrl", "createdAt"]
+    },
+    "service": {
+      "title": "Service",
+      "description": "A haircut or grooming service offered by the shop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "description", "price", "createdAt"]
+    },
+    "appointment": {
+      "title": "Appointment",
+      "description": "A booking made by a customer.",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "barberId": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "appointmentDate": { "type": "string", "format": "date" },
+        "startTime": { "type": "string", "format": "time" },
+        "endTime": { "type": "string", "format": "time" },
+        "durationMinutes": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "confirmed", "rejected", "completed", "cancelled"]
+        },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "customerPhone", "barberId", "serviceId", "appointmentDate", "startTime", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": "admin",
+      "description": "Admin users collection."
+    },
+    "/barbers/{barberId}": {
+      "schema": "barber",
+      "description": "Barbers available in the shop."
+    },
+    "/services/{serviceId}": {
+      "schema": "service",
+      "description": "Services offered by the shop."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "appointment",
+      "description": "Customer appointments."
+    }
+  }
+}

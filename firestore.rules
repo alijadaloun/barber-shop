@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Auth helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // For this app, only authorized admins can do certain things.
+      // We will verify admin against the 'admins' collection.
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation Helpers
+    function isValidBarber(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.bio is string && data.bio.size() <= 1000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 500;
+    }
+
+    function isValidService(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.price is number && data.price >= 0;
+    }
+
+    function isValidAppointment(data) {
+      return data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+             data.customerEmail is string && data.customerEmail.size() >= 5 && data.customerEmail.size() <= 254 &&
+             (!('customerPhone' in data) || (data.customerPhone is string && data.customerPhone.size() >= 5 && data.customerPhone.size() <= 20)) &&
+             isValidId(data.barberId) && isValidId(data.serviceId) &&
+             data.appointmentDate is string && // Wait, Firestore rules are limited with dates, so check as string
+             data.startTime is string &&
+             data.status in ['pending', 'confirmed', 'rejected', 'completed', 'cancelled'] &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    // Admin collection
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Barbers collection
+    match /barbers/{barberId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidBarber(request.resource.data);
+    }
+
+    // Services collection
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidService(request.resource.data);
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      // Public can create pending appointments
+      allow create: if request.resource.data.status == 'pending' &&
+                       (!('endTime' in request.resource.data)) &&
+                       (!('durationMinutes' in request.resource.data)) &&
+                       isValidAppointment(request.resource.data);
+      
+      // Only admin can list, read, or update appointments
+      allow get, list: if isAdmin();
+      
+      allow update: if isAdmin() && (
+        // Action: Accept
+        (request.resource.data.status == 'confirmed' && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'durationMinutes', 'endTime', 'updatedAt']) &&
+         request.resource.data.updatedAt == request.time) ||
+        // Action: Reject
+        (request.resource.data.status == 'rejected' && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectionReason', 'updatedAt']) &&
+         request.resource.data.updatedAt == request.time) ||
+        // Action: General Update
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+         request.resource.data.updatedAt == request.time)
+      );
+
+      allow delete: if isAdmin();
+    }
+  }
+}
