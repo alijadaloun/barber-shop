@@ -4,14 +4,31 @@ import { setupFirebaseAdmin } from "./firebase-admin-setup";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import cors from "cors";
 import { addMinutes, format, parse } from "date-fns";
 import { buildAcceptanceEmailHtml, sendEmail } from "./server/email";
 
 dotenv.config();
-
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://alijadaloun.github.io",
+  // If the site is a project page (repo name in the path), add the full origin:
+ "https://alijadaloun.github.io/barber-shop",
+];
 const PORT = 3000;
 const app = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow non-browser tools (no Origin header)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS blocked: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 
 const { db } = setupFirebaseAdmin();
 

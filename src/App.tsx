@@ -26,12 +26,15 @@ import {
 } from "lucide-react";
 import { cn } from "./lib/utils";
 import {
+  acceptAppointment,
+  adminLogin,
   createAppointment,
   createService,
   deleteService,
   fetchAppointments,
   fetchBarbers,
   fetchServices,
+  rejectAppointment,
   type Appointment,
   type Barber,
   type Service,
@@ -576,12 +579,7 @@ const AdminLoginPage = ({ onLogin }: { onLogin: (token: string) => void }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
+      const data = await adminLogin(email, password);
       if (data.token) {
         onLogin(data.token);
       } else {
@@ -690,15 +688,7 @@ const AdminDashboard = ({ token, onLogout }: { token: string, onLogout: () => vo
 
   const handleAccept = async (id: string) => {
     try {
-      const res = await fetch(`/api/admin/appointments/${id}/accept`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ durationMinutes: duration })
-      });
-      const data = await res.json();
+      const data = await acceptAppointment(token, id, duration);
       if (data.error) alert(data.error);
       else {
         setShowAcceptModal(null);
@@ -757,15 +747,7 @@ const AdminDashboard = ({ token, onLogout }: { token: string, onLogout: () => vo
 
   const handleReject = async (id: string) => {
     try {
-      const res = await fetch(`/api/admin/appointments/${id}/reject`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ rejectionReason })
-      });
-      const data = await res.json();
+      const data = await rejectAppointment(token, id, rejectionReason);
       if (data.error) alert(data.error);
       else {
         setShowRejectModal(null);
