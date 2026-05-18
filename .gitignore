@@ -8,3 +8,6 @@ coverage/
 !.env.example
 .env
 .env.example
+mohtades-shop-firebase-adminsdk-fbsvc-89601ed230.json
+firebase-applet-config.json
+firebase-blueprint.json
