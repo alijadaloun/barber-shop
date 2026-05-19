@@ -25,18 +25,58 @@ function parseServiceAccountJson(raw: string): ServiceAccount {
   ) as ServiceAccount;
 }
 
+function looksLikeInlineJson(value: string): boolean {
+  return value.trimStart().startsWith("{");
+}
+
+function loadFromStringOrPath(value: string, envVarName: string): ServiceAccount {
+  const trimmed = value.trim();
+
+  if (looksLikeInlineJson(trimmed)) {
+    return parseServiceAccountJson(trimmed);
+  }
+
+  try {
+    return parseServiceAccountJson(readFileSync(trimmed, "utf8"));
+  } catch (err) {
+    const errno = err as NodeJS.ErrnoException;
+    if (errno.code === "ENOENT") {
+      throw new Error(
+        `${envVarName} is set to "${trimmed}" but that file is not available on this server. ` +
+          `On Render, paste the full minified service account JSON into ${envVarName} ` +
+          `(must start with {"type":"service_account",...}), not a local file path.`
+      );
+    }
+    if (err instanceof SyntaxError) {
+      throw new Error(
+        `${envVarName} must be either inline JSON or a readable JSON file path. ` +
+          `On Render, use inline JSON in ${envVarName}.`
+      );
+    }
+    throw err;
+  }
+}
+
 function loadServiceAccountFromEnv(): ServiceAccount | null {
   const jsonEnv =
     process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ??
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
   if (jsonEnv?.trim()) {
-    return parseServiceAccountJson(jsonEnv.trim());
+    return loadFromStringOrPath(
+      jsonEnv,
+      process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+        ? "GOOGLE_APPLICATION_CREDENTIALS_JSON"
+        : "FIREBASE_SERVICE_ACCOUNT_JSON"
+    );
   }
 
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
   if (credentialsPath) {
-    return parseServiceAccountJson(readFileSync(credentialsPath, "utf8"));
+    return loadFromStringOrPath(
+      credentialsPath,
+      "GOOGLE_APPLICATION_CREDENTIALS"
+    );
   }
 
   return null;
