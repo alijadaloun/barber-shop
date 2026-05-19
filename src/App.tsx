@@ -25,6 +25,7 @@ import {
   Plus
 } from "lucide-react";
 import { cn } from "./lib/utils";
+import { stripBase, toPublicPath } from "./lib/router";
 import {
   acceptAppointment,
   adminLogin,
@@ -1070,18 +1071,24 @@ const AdminDashboard = ({ token, onLogout }: { token: string, onLogout: () => vo
 };
 
 export default function App() {
-  const [currentPath, setCurrentPath] = useState("/");
+  const [currentPath, setCurrentPath] = useState(() =>
+    stripBase(window.location.pathname)
+  );
   const [adminToken, setAdminToken] = useState<string | null>(localStorage.getItem("mohtade_admin_token"));
 
   useEffect(() => {
-    // Basic router logic for MVP
-    const path = window.location.pathname;
-    if (path === "/admin" && !adminToken) setCurrentPath("/admin/login");
-    else setCurrentPath(path);
+    const syncPath = () => {
+      const path = stripBase(window.location.pathname);
+      if (path === "/admin" && !adminToken) setCurrentPath("/admin/login");
+      else setCurrentPath(path);
+    };
+    syncPath();
+    window.addEventListener("popstate", syncPath);
+    return () => window.removeEventListener("popstate", syncPath);
   }, [adminToken]);
 
   const navigate = (path: string) => {
-    window.history.pushState({}, "", path);
+    window.history.pushState({}, "", toPublicPath(path));
     setCurrentPath(path);
     window.scrollTo(0, 0);
   };
