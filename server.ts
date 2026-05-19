@@ -365,7 +365,7 @@ async function seedData() {
 }
 seedData().catch((err) => {
   console.error(
-    "Firestore seed failed. Set GOOGLE_APPLICATION_CREDENTIALS to a Firebase service account JSON file:",
+    "Firestore seed failed. Set GOOGLE_APPLICATION_CREDENTIALS_JSON (Render) or GOOGLE_APPLICATION_CREDENTIALS (local file path):",
     err
   );
 });

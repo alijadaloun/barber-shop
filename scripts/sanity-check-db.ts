@@ -13,7 +13,12 @@ async function main() {
   console.log("=== Firestore sanity check ===");
   console.log(`Project:  ${projectId}`);
   console.log(`Database: ${databaseId}`);
-  console.log(`Creds:    ${process.env.GOOGLE_APPLICATION_CREDENTIALS || "(none)"}`);
+  const credsSource = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+    ? "GOOGLE_APPLICATION_CREDENTIALS_JSON"
+    : process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+      ? "FIREBASE_SERVICE_ACCOUNT_JSON"
+      : process.env.GOOGLE_APPLICATION_CREDENTIALS || "(none)";
+  console.log(`Creds:    ${credsSource}`);
   console.log("");
 
   const { db } = setupFirebaseAdmin();
